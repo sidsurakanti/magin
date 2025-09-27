@@ -11,7 +11,7 @@ from redis.asyncio.client import Redis as AsyncRedis
 import asyncio
 import os
 from dotenv import load_dotenv
-from typing import Optional
+from typing import Awaitable, Callable, Optional, Any
 
 from prompts import CODEGEN_PROMPT, STORYBOARD_PROMPT
 
@@ -57,9 +57,6 @@ async def set_job_status(
 
 async def _pipeline(redis_client: AsyncRedis, job_id: UUID, base_prompt: str):
     client = await get_anthropic_client()
-    # redis_client = aioredis.from_url(
-    #     os.getenv("REDIS_URL", "redis://localhost:6379"), db=1, decode_responses=True
-    # )
 
     job_dir = Path("renders") / str(job_id)
     job_dir.mkdir(parents=True, exist_ok=True)
@@ -70,7 +67,7 @@ async def _pipeline(redis_client: AsyncRedis, job_id: UUID, base_prompt: str):
     try:
         await set_job_status(redis_client, job_id, "storyboarding")
 
-        def redis_flush_stream(stream_path: str):
+        def redis_flush_stream(stream_path: str) -> Callable[[str], Awaitable[Any]]:
             async def f(delta: str):
                 await redis_client.rpush(stream_path, delta)  # type: ignore
 

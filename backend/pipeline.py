@@ -2,7 +2,7 @@ from anthropic import AsyncAnthropic
 from anthropic.types import TextBlock
 import os
 from dotenv import load_dotenv
-from typing import Callable, Optional, Any
+from typing import Awaitable, Callable, Optional, Any
 import asyncio
 
 load_dotenv()
@@ -24,7 +24,7 @@ async def query_anthropic(
     max_tokens: int = DEFAULT_MAX_TOKENS,
     temperature: float = DEFAULT_TEMPERATURE,
     stream: bool = False,
-    stream_handler: Optional[Callable[[str], Any]] = None,
+    stream_handler: Optional[Callable[[str], Awaitable[Any]]] = None,
 ):
     message_content = [
         {
@@ -46,10 +46,11 @@ async def query_anthropic(
             block.text for block in res.content if isinstance(block, TextBlock)
         )
         return final
+
     async with client.messages.stream(**message_params) as flow:
         async for delta in flow.text_stream:
             if stream_handler:
-                stream_handler(delta)
+                await stream_handler(delta)
 
     final = await flow.get_final_message()
     return "".join(b.text for b in final.content if isinstance(b, TextBlock))
