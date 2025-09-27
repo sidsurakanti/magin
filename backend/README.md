@@ -9,6 +9,12 @@ brew install redis # or similar
 ANTHROPIC_API_KEY=""
 ```
 
+### With Docker
+```bash
+docker compose up --build
+```
+
+### Without Docker
 ```bash
 uv sync --frozen && source .venv/bin/activate
 ```

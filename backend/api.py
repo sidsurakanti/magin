@@ -1,19 +1,22 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, FileResponse
-from celery import Celery
-from pipeline import query_anthropic, render, get_anthropic_client, extract_codeblock
-from uuid import uuid4, UUID
+from pydantic import BaseModel
+
 from pathlib import Path
+from uuid import uuid4, UUID
 import json
-import redis.asyncio as aioredis
-from redis.asyncio.client import Redis as AsyncRedis
 import asyncio
 import os
 from dotenv import load_dotenv
 from typing import Awaitable, Callable, Optional, Any
 
+from celery import Celery
+import redis.asyncio as aioredis
+from redis.asyncio.client import Redis as AsyncRedis
+
 from prompts import CODEGEN_PROMPT, STORYBOARD_PROMPT
+from pipeline import query_anthropic, render, get_anthropic_client, extract_codeblock
 
 load_dotenv()
 
@@ -78,7 +81,7 @@ async def _pipeline(redis_client: AsyncRedis, job_id: UUID, base_prompt: str):
             base_prompt,
             STORYBOARD_PROMPT,
             stream=True,
-            stream_handler=redis_flush_stream(f"{job_id}:stream:storyboard"),
+            stream_handler=redis_flush_stream(f"job:{job_id}:stream:storyboard"),
         )
 
         await set_job_status(redis_client, job_id, "code-generating")
@@ -87,7 +90,7 @@ async def _pipeline(redis_client: AsyncRedis, job_id: UUID, base_prompt: str):
             board,
             CODEGEN_PROMPT,
             stream=True,
-            stream_handler=redis_flush_stream(f"{job_id}:stream:codegen"),
+            stream_handler=redis_flush_stream(f"job:{job_id}:stream:codegen"),
         )
 
         # write locally for now
@@ -97,6 +100,9 @@ async def _pipeline(redis_client: AsyncRedis, job_id: UUID, base_prompt: str):
 
         await set_job_status(redis_client, job_id, "rendering")
         await render(in_fp, out_fp)  # mp4 animation
+
+        # on successfull render
+        await set_job_status(redis_client, job_id, "done")
     except Exception as e:
         await set_job_status(redis_client, job_id, "error", error=str(e))
     finally:
@@ -108,12 +114,21 @@ def pipeline(job_id: UUID, base_prompt: str):
     asyncio.run(_pipeline(redice, job_id, base_prompt))
 
 
-@app.get("/submit/{base_prompt}")
-async def submit(base_prompt: str):
+class SubmitRequest(BaseModel):
+    base_prompt: str
+
+
+@app.post("/submit/")
+async def submit(request: SubmitRequest):
     job_id = uuid4()
-    pipeline.delay(job_id, base_prompt)  # type: ignore
+    pipeline.delay(job_id, request.base_prompt)  # type: ignore
     await set_job_status(redice, job_id, "pending")
-    return {"job_id": str(job_id), "type": "new_task", "result": "started"}
+    return {
+        "job_id": str(job_id),
+        "type": "new_task",
+        "result": "success",
+        "base_prompt": request.base_prompt,
+    }
 
 
 @app.get("/edit/{job_id}")
@@ -129,30 +144,32 @@ async def sse(job_id: str):
             storyboard = await redice.lrange(f"job:{job_id}:stream:storyboard", 0, -1)  # type: ignore
             codegen = await redice.lrange(f"job:{job_id}:stream:codegen", 0, -1)  # type: ignore
 
+            payload = {
+                "job_id": job_id,
+                "status": status,
+                "stream": {
+                    "storyboard": "".join(storyboard),
+                    "codegen": "".join(codegen),
+                },
+            }
+
             if status:
+                yield f"data: {json.dumps(payload)}\n\n"
+
                 if status == "done":
-                    yield f"""data: {
-                        json.dumps({
-                            'job_id': job_id,
-                            'status': status
-                        })
-                    }\n\n"""
                     break
 
-                yield f"""data: {
-                        json.dumps({
-                            'job_id': job_id,
-                            'status': status, 
-                            'stream': {
-                                "storyboard": "".join(storyboard), 
-                                "codegen": "".join(codegen)
-                            }
-                        })
-                    }\n\n"""
+            await asyncio.sleep(1)
 
-            await asyncio.sleep(2)
-
-    return StreamingResponse(event_generator(), media_type="text/event-stream")
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Connection": "keep-alive",
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @app.get("/retrieve/{job_id}", response_class=FileResponse)

@@ -1,3 +1,9 @@
+import Studio from "@/components/studio";
+
 export default function Home() {
-  return <main className="font-mono">Hello, world!</main>;
+  return (
+    <main className="w-full h-full">
+      <Studio />
+    </main>
+  );
 }
