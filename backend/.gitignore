@@ -1,4 +1,16 @@
 .env*
 !.env.example
+renders/
+
+# macos
+.DS_Store
+
+# python
 __pycache__
+.venv
+
+# redis
+*.rdb
+*.aof
+*.pid
 

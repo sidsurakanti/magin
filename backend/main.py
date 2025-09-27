@@ -13,9 +13,6 @@ def main():
     if not user_query.strip():
         user_query = DEFAULT_QUERY
 
-    print("STORYBOARD")
-    print("\n\nCODEGEN")
-
 
 if __name__ == "__main__":
     main()
