@@ -15,9 +15,12 @@ export default function QueryPanel() {
   const {
     status,
     jobId,
+    iteration,
+    videoUrl,
     setStoryboardChunk,
     setCodegenChunk,
     setVideoUrl,
+    setIteration,
     setStatus,
     setJobId,
   } = useAppStore<AppStore>((state) => state as AppStore);
@@ -62,10 +65,13 @@ export default function QueryPanel() {
       setStatus(data.status);
       setStoryboardChunk(data.stream.storyboard);
       setCodegenChunk(data.stream.codegen);
+      setIteration(data.iteration);
 
       if (data.status === "done") {
         sse.close();
-        setVideoUrl(`http://localhost:8000/retrieve/${jobId}`);
+        setVideoUrl(
+          `http://localhost:8000/retrieve/${jobId}/${data.iteration}`,
+        );
       }
 
       if (data.status === "error") {
@@ -104,13 +110,22 @@ export default function QueryPanel() {
       </div>
 
       {(status === "done" || status === "editing") && (
-        <div className="text-sm absolute z-100 flex flex-col bottom-[35%] right-5 w-80 h-12">
-          <div className="flex flex-col justify-center items-end bg-gradient-to-br from-transparent via-white/50 to-white  px-4 py-2 text-right">
-            <span className="font-light text-neutral-600 MB-1">EDITS</span>
+        <div className="text-sm absolute z-100 flex flex-col bottom-[45%] right-5 w-80 h-12">
+          <div className="w-80 flex flex-col justify-center items-end bg-gradient-to-br from-transparent via-white/50 to-white px-4 py-2 text-right">
+            <span className="font-light text-neutral-600 mb-1.5">EDITS</span>
             <ul className="list-none flex flex-col items-end">
               {editHistory.map((edit, idx) => (
-                <li key={idx} className="mb-0.5">
-                  {edit}
+                <li
+                  key={idx}
+                  onClick={() => {
+                    if (!jobId) return;
+                    setVideoUrl(
+                      `http://localhost:8000/retrieve/${jobId}/${idx + 1}`,
+                    );
+                  }}
+                  className="mb-0.5 hover:bg-neutral-50 w-full"
+                >
+                  <span className="font-semibold">#{idx + 1}</span> {edit}
                 </li>
               ))}
             </ul>

@@ -74,9 +74,11 @@ async def _pipeline(redis_client: AsyncRedis, job_id: UUID, base_prompt: str):
     client = await get_anthropic_client()
 
     job_dir = Path("renders") / str(job_id)
+    iteration_dir = job_dir / "0"
     job_dir.mkdir(parents=True, exist_ok=True)
+    iteration_dir.mkdir(parents=True, exist_ok=True)
 
-    in_fp, out_fp = str(job_dir / "out.py"), str(job_dir)
+    in_fp, out_fp = iteration_dir / "out.py", iteration_dir
 
     # CODEGEN -> store locally -> serve on GET /retrieve
     try:
@@ -108,10 +110,10 @@ async def _pipeline(redis_client: AsyncRedis, job_id: UUID, base_prompt: str):
         with open(in_fp, "w", encoding="utf8") as file:
             file.write(extract_codeblock(code))
 
-        await set_job_status(redis_client, job_id, "rendering")
-        await render(in_fp, out_fp)  # mp4 animation
+        (job_dir / "out.py").write_text(in_fp.read_text(), encoding="utf8")
 
-        # on successfull render
+        await set_job_status(redis_client, job_id, "rendering")
+        await render(str(in_fp), str(out_fp))  # mp4 animation
         await set_job_status(redis_client, job_id, "done")
     except Exception as e:
         await set_job_status(redis_client, job_id, "error", error=str(e))
@@ -125,11 +127,16 @@ async def _editgen(redis_client: AsyncRedis, job_id: str, edit_prompt: str):
     client = await get_anthropic_client()
 
     try:
-        job_dir = Path("renders") / str(job_id)
-        in_fp, out_fp = str(job_dir / "out.py"), str(job_dir)
+        current_iter = int(await redis_client.get(f"job:{job_id}:iteration") or 0)
+        next_iter = current_iter + 1
+        await redis_client.set(f"job:{job_id}:iteration", next_iter)
 
-        with open(in_fp, "r", encoding="utf8") as file:
-            curr_code = file.read()
+        job_dir = Path("renders") / str(job_id)
+        iteration_dir = job_dir / str(next_iter)
+        iteration_dir.mkdir(parents=True, exist_ok=True)
+
+        latest_fp = job_dir / "out.py"
+        curr_code = latest_fp.read_text()
 
         full_prompt = f"""
 The following Manim CE code is the current state of the scene:
@@ -156,11 +163,11 @@ Apply the following edits:
 
         # write locally for now
         # TODO: write to s3 bucket
-        with open(in_fp, "w", encoding="utf8") as file:
-            file.write(extract_codeblock(code))
+        (iteration_dir / "out.py").write_text(extract_codeblock(code), encoding="utf8")
+        latest_fp.write_text(extract_codeblock(code), encoding="utf8")
 
         await set_job_status(redis_client, job_id, "rendering")
-        await render(in_fp, out_fp)  # mp4 animation
+        await render(str(iteration_dir / "out.py"), str(iteration_dir))
         await set_job_status(redis_client, job_id, "done")
     except Exception as e:
         await set_job_status(redis_client, job_id, "error", error=str(e))
@@ -194,6 +201,7 @@ async def submit(request: SubmitRequest):
     job_id = uuid4()
     pipeline.delay(job_id, request.base_prompt)  # type: ignore
     await set_job_status(redice, job_id, "pending")
+    await redice.set(f"job:{job_id}:iteration", 0)
     return {
         "job_id": str(job_id),
         "type": "new_task",
@@ -226,10 +234,12 @@ async def sse(job_id: str):
             storyboard = await redice.lrange(f"job:{job_id}:stream:storyboard", 0, -1)  # type: ignore
             codegen = await redice.lrange(f"job:{job_id}:stream:codegen", 0, -1)  # type: ignore
             error = await redice.get(f"job:{job_id}:status:error")
+            iteration = await redice.get(f"job:{job_id}:iteration")
 
             payload = {
                 "job_id": job_id,
                 "status": status,
+                "iteration": iteration,
                 "error": error,
                 "stream": {
                     "storyboard": "".join(storyboard),
@@ -256,7 +266,15 @@ async def sse(job_id: str):
     )
 
 
-@app.get("/retrieve/{job_id}", response_class=FileResponse)
-def retrieve(job_id: str):
-    fp = Path("renders") / job_id / "videos" / "out" / "720p30" / "out.mp4"
+@app.get("/retrieve/{job_id}/{iteration}", response_class=FileResponse)
+def retrieve(job_id: str, iteration: int):
+    fp = (
+        Path("renders")
+        / job_id
+        / str(iteration)
+        / "videos"
+        / "out"
+        / "720p30"
+        / "out.mp4"
+    )
     return FileResponse(path=fp)

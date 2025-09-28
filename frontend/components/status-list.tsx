@@ -14,7 +14,7 @@ const statuses = [
 ];
 
 export default function StatusList() {
-  const { status: activeStatus } = useAppStore<AppStore>(
+  const { status: activeStatus, iteration } = useAppStore<AppStore>(
     (state) => state as AppStore,
   );
   // const activeStatus = "code-generating";
@@ -26,16 +26,20 @@ export default function StatusList() {
           key={status}
           className={cn(
             status === activeStatus
-              ? "text-black font-medium text-3xl"
+              ? "text-black font-medium text-3xl mt-0.5 mb-1"
               : "text-neutral-600 text-base",
             "uppercase",
           )}
         >
           {status}
+          {activeStatus === "rendering" && status === "rendering" && (
+            <div className="inline-block bg-black animate-spin ml-2 w-3 h-3" />
+          )}
         </span>
       ))}
-      <hr className="w-12 border-t border-neutral-300 mt-2" />
+      <hr className="w-12 border-t border-neutral-300 my-2" />
       <span className="font-light text-xs">STATUS</span>
+      <span className="font-light text-xs">ITERATION #{iteration}</span>
     </div>
   );
 }
