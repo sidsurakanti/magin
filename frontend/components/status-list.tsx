@@ -17,7 +17,7 @@ export default function StatusList() {
   const { status: activeStatus } = useAppStore<AppStore>(
     (state) => state as AppStore,
   );
-  // const activeStatus = "idle";
+  // const activeStatus = "code-generating";
 
   return (
     <div className="flex flex-col items-start space-y-1 ml-6">

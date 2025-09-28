@@ -38,6 +38,9 @@ export default function QueryPanel() {
   const handleEdit = async () => {
     setEditHistory((h) => [...h, editQuery]);
     setEditQuery("");
+
+    if (!jobId) return;
+
     const response = await fetch("http://localhost:8000/edit/", {
       headers: { "Content-Type": "application/json" },
       method: "POST",
@@ -50,7 +53,6 @@ export default function QueryPanel() {
 
   useEffect(() => {
     if (!jobId) return;
-
     const sse = new EventSource(`http://localhost:8000/events/${jobId}`);
 
     sse.onmessage = (e) => {
@@ -93,14 +95,17 @@ export default function QueryPanel() {
             }
           }}
         />
-        <Button className="rounded-none cursor-pointer" onClick={handleSubmit}>
+        <Button
+          className="rounded-none shadow-sm cursor-pointer"
+          onClick={handleSubmit}
+        >
           Create
         </Button>
       </div>
 
       {(status === "done" || status === "editing") && (
         <div className="text-sm absolute z-100 flex flex-col bottom-[35%] right-5 w-80 h-12">
-          <div className="flex flex-col justify-center items-end bg-gradient-to-br from-transparent via-white/40 to-white px-4 py-2 text-right">
+          <div className="flex flex-col justify-center items-end bg-gradient-to-br from-transparent via-white/50 to-white  px-4 py-2 text-right">
             <span className="font-light text-neutral-600 MB-1">EDITS</span>
             <ul className="list-none flex flex-col items-end">
               {editHistory.map((edit, idx) => (

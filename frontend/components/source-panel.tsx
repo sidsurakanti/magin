@@ -30,7 +30,7 @@ export function SourcePanel() {
   if (status === "idle") {
     return (
       <div className="h-full w-full flex items-center justify-center">
-        <p className="text-neutral-700 text-lg">
+        <p className="text-neutral-700 text-xl font-light">
           Submit a prompt to get started.
         </p>
         <div className="absolute -z-[1000] top-1/2 left-1/2 w-100 h-105 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-br from-purple-200 to-pink-200 rounded-full blur-3xl opacity-50 animate-spin" />

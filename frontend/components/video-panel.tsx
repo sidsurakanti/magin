@@ -19,7 +19,7 @@ export function VideoPanel() {
           controls
           autoPlay
           loop
-          className="mt-2 aspect-video max-w-[1280px] w-fit rounded-none"
+          className="mt-2 aspect-video max-w-[1052px] w-fit rounded-none"
         />
       </TabsContent>
     </>
