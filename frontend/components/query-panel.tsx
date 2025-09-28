@@ -12,7 +12,6 @@ export default function QueryPanel() {
   const [editQuery, setEditQuery] = useState<string>("");
   const [reloadVersion, setReloadVersion] = useState(0);
   const [editHistory, setEditHistory] = useState<string[]>([]);
-  const [error, setError] = useState<string | null>(null);
   const {
     status,
     jobId,
@@ -68,7 +67,6 @@ export default function QueryPanel() {
       }
 
       if (data.status === "error") {
-        setError(data.error);
         console.error("ERROR:", data.error);
       }
     };
@@ -83,11 +81,6 @@ export default function QueryPanel() {
 
   return (
     <>
-      <div className="p-2 text-sm flex items-center justify-between">
-        <span>status: {status}</span>
-        <span>{jobId}</span>
-      </div>
-
       <div className="flex items-center gap-5">
         <Input
           className="rounded-none text-lg"
@@ -106,12 +99,14 @@ export default function QueryPanel() {
       </div>
 
       {(status === "done" || status === "editing") && (
-        <div className="text-sm absolute z-100 flex flex-col bottom-[25%] right-5 w-80 h-12">
-          <div className="flex flex-col justify-center items-end bg-gradient-to-br from-transparent via-white/30 to-white px-4 py-2">
+        <div className="text-sm absolute z-100 flex flex-col bottom-[35%] right-5 w-80 h-12">
+          <div className="flex flex-col justify-center items-end bg-gradient-to-br from-transparent via-white/40 to-white px-4 py-2 text-right">
             <span className="font-light text-neutral-600 MB-1">EDITS</span>
             <ul className="list-none flex flex-col items-end">
               {editHistory.map((edit, idx) => (
-                <li key={idx}>{edit}</li>
+                <li key={idx} className="mb-0.5">
+                  {edit}
+                </li>
               ))}
             </ul>
           </div>

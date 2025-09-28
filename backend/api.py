@@ -15,7 +15,7 @@ from celery import Celery
 import redis.asyncio as aioredis
 from redis.asyncio.client import Redis as AsyncRedis
 
-from prompts import CODEGEN_PROMPT, STORYBOARD_PROMPT
+from prompts import CODEGEN_PROMPT, STORYBOARD_PROMPT, EDITGEN_PROMPT
 from pipeline import query_anthropic, render, get_anthropic_client, extract_codeblock
 
 load_dotenv()
@@ -51,11 +51,23 @@ async def ping():
 
 
 async def set_job_status(
-    redis_client: AsyncRedis, job_id: UUID, status: str, error: Optional[str] = None
+    redis_client: AsyncRedis,
+    job_id: UUID | str,
+    status: str,
+    error: Optional[str] = None,
 ):
     await redis_client.set(f"job:{job_id}:status", status)
     if error:
         return await redis_client.set(f"job:{job_id}:status:error", error)
+
+
+def redis_flush_stream(
+    redis_client: AsyncRedis, stream_path: str
+) -> Callable[[str], Awaitable[Any]]:
+    async def f(delta: str):
+        await redis_client.rpush(stream_path, delta)  # type: ignore
+
+    return f
 
 
 async def _pipeline(redis_client: AsyncRedis, job_id: UUID, base_prompt: str):
@@ -70,18 +82,14 @@ async def _pipeline(redis_client: AsyncRedis, job_id: UUID, base_prompt: str):
     try:
         await set_job_status(redis_client, job_id, "storyboarding")
 
-        def redis_flush_stream(stream_path: str) -> Callable[[str], Awaitable[Any]]:
-            async def f(delta: str):
-                await redis_client.rpush(stream_path, delta)  # type: ignore
-
-            return f
-
         board = await query_anthropic(
             client,
             base_prompt,
             STORYBOARD_PROMPT,
             stream=True,
-            stream_handler=redis_flush_stream(f"job:{job_id}:stream:storyboard"),
+            stream_handler=redis_flush_stream(
+                redis_client, f"job:{job_id}:stream:storyboard"
+            ),
         )
 
         await set_job_status(redis_client, job_id, "code-generating")
@@ -90,7 +98,9 @@ async def _pipeline(redis_client: AsyncRedis, job_id: UUID, base_prompt: str):
             board,
             CODEGEN_PROMPT,
             stream=True,
-            stream_handler=redis_flush_stream(f"job:{job_id}:stream:codegen"),
+            stream_handler=redis_flush_stream(
+                redis_client, f"job:{job_id}:stream:codegen"
+            ),
         )
 
         # write locally for now
@@ -107,11 +117,72 @@ async def _pipeline(redis_client: AsyncRedis, job_id: UUID, base_prompt: str):
         await set_job_status(redis_client, job_id, "error", error=str(e))
     finally:
         await client.close()
+        await redis_client.aclose()
+
+
+async def _editgen(redis_client: AsyncRedis, job_id: str, edit_prompt: str):
+    await set_job_status(redis_client, job_id, "editing")
+    client = await get_anthropic_client()
+
+    try:
+        job_dir = Path("renders") / str(job_id)
+        in_fp, out_fp = str(job_dir / "out.py"), str(job_dir)
+
+        with open(in_fp, "r", encoding="utf8") as file:
+            curr_code = file.read()
+
+        full_prompt = f"""
+The following Manim CE code is the current state of the scene:
+
+```python
+{curr_code}
+```
+
+Apply the following edits:
+{edit_prompt}
+"""
+
+        await redis_client.delete(f"job:{job_id}:stream:codegen")
+
+        code = await query_anthropic(
+            client,
+            full_prompt,
+            EDITGEN_PROMPT,
+            stream=True,
+            stream_handler=redis_flush_stream(
+                redis_client, f"job:{job_id}:stream:codegen"
+            ),
+        )
+
+        # write locally for now
+        # TODO: write to s3 bucket
+        with open(in_fp, "w", encoding="utf8") as file:
+            file.write(extract_codeblock(code))
+
+        await set_job_status(redis_client, job_id, "rendering")
+        await render(in_fp, out_fp)  # mp4 animation
+        await set_job_status(redis_client, job_id, "done")
+    except Exception as e:
+        await set_job_status(redis_client, job_id, "error", error=str(e))
+    finally:
+        await client.close()
+        await redis_client.aclose()
 
 
 @brocolli.task
 def pipeline(job_id: UUID, base_prompt: str):
-    asyncio.run(_pipeline(redice, job_id, base_prompt))
+    redis_client = aioredis.from_url(
+        os.getenv("REDIS_URL", "redis://localhost:6379"), db=1, decode_responses=True
+    )
+    asyncio.run(_pipeline(redis_client, job_id, base_prompt))
+
+
+@brocolli.task
+def editgen(job_id: str, edit_prompt: str):
+    redis_client = aioredis.from_url(
+        os.getenv("REDIS_URL", "redis://localhost:6379"), db=1, decode_responses=True
+    )
+    asyncio.run(_editgen(redis_client, job_id, edit_prompt))
 
 
 class SubmitRequest(BaseModel):
@@ -131,9 +202,20 @@ async def submit(request: SubmitRequest):
     }
 
 
-@app.get("/edit/{job_id}")
-def edit(job_id: str, base_prompt: str):
-    return {"job_id": str(job_id), "prompt": base_prompt}
+class EditRequest(BaseModel):
+    job_id: str
+    base_prompt: str
+
+
+@app.post("/edit/")
+def edit(req: EditRequest):
+    editgen.delay(req.job_id, req.base_prompt)  # type: ignore
+    return {
+        "job_id": str(req.job_id),
+        "type": "new_task",
+        "result": "success",
+        "prompt": req.base_prompt,
+    }
 
 
 @app.get("/events/{job_id}")
@@ -143,10 +225,12 @@ async def sse(job_id: str):
             status = await redice.get(f"job:{job_id}:status")
             storyboard = await redice.lrange(f"job:{job_id}:stream:storyboard", 0, -1)  # type: ignore
             codegen = await redice.lrange(f"job:{job_id}:stream:codegen", 0, -1)  # type: ignore
+            error = await redice.get(f"job:{job_id}:status:error")
 
             payload = {
                 "job_id": job_id,
                 "status": status,
+                "error": error,
                 "stream": {
                     "storyboard": "".join(storyboard),
                     "codegen": "".join(codegen),
@@ -156,10 +240,10 @@ async def sse(job_id: str):
             if status:
                 yield f"data: {json.dumps(payload)}\n\n"
 
-                if status == "done":
+                if status in ("done", "error"):
                     break
 
-            await asyncio.sleep(1)
+            await asyncio.sleep(0.2)
 
     return StreamingResponse(
         event_generator(),
