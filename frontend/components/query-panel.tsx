@@ -4,9 +4,15 @@ import { useEffect, useState } from "react";
 import { type AppStore, useAppStore } from "@/lib/store";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { ArrowUp } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function QueryPanel() {
   const [query, setQuery] = useState<string>("");
+  const [editQuery, setEditQuery] = useState<string>("");
+  const [reloadVersion, setReloadVersion] = useState(0);
+  const [editHistory, setEditHistory] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const {
     status,
     jobId,
@@ -18,8 +24,8 @@ export default function QueryPanel() {
   } = useAppStore<AppStore>((state) => state as AppStore);
 
   const handleSubmit = async () => {
-    console.log("QUERY SUBMITTED:", query);
     // localhost:8000/submit/{base_prompt}
+    setQuery("");
     const response = await fetch("http://localhost:8000/submit/", {
       headers: { "Content-Type": "application/json" },
       method: "POST",
@@ -28,6 +34,19 @@ export default function QueryPanel() {
     const data = await response.json();
     setJobId(data.job_id);
     console.log("RESPONSE:", data);
+  };
+
+  const handleEdit = async () => {
+    setEditHistory((h) => [...h, editQuery]);
+    setEditQuery("");
+    const response = await fetch("http://localhost:8000/edit/", {
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+      body: JSON.stringify({ job_id: jobId, base_prompt: editQuery }),
+    });
+    const data = await response.json();
+    setReloadVersion((v) => v + 1);
+    console.log("EDIT RESPONSE:", data);
   };
 
   useEffect(() => {
@@ -47,6 +66,11 @@ export default function QueryPanel() {
         sse.close();
         setVideoUrl(`http://localhost:8000/retrieve/${jobId}`);
       }
+
+      if (data.status === "error") {
+        setError(data.error);
+        console.error("ERROR:", data.error);
+      }
     };
 
     sse.onerror = (err) => {
@@ -55,25 +79,59 @@ export default function QueryPanel() {
     };
 
     return () => sse.close();
-  }, [jobId]);
+  }, [jobId, reloadVersion]);
 
   return (
     <>
       <div className="p-2 text-sm flex items-center justify-between">
-        <span>{status}</span>
+        <span>status: {status}</span>
         <span>{jobId}</span>
       </div>
+
       <div className="flex items-center gap-5">
         <Input
           className="rounded-none text-lg"
           placeholder="What do you want to visualize today?"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              handleSubmit();
+            }
+          }}
         />
-        <Button className="rounded-none" onClick={handleSubmit}>
+        <Button className="rounded-none cursor-pointer" onClick={handleSubmit}>
           Create
         </Button>
       </div>
+
+      {(status === "done" || status === "editing") && (
+        <div className="text-sm absolute z-100 flex flex-col bottom-[25%] right-5 w-80 h-12">
+          <div className="flex flex-col justify-center items-end bg-gradient-to-br from-transparent via-white/30 to-white px-4 py-2">
+            <span className="font-light text-neutral-600 MB-1">EDITS</span>
+            <ul className="list-none flex flex-col items-end">
+              {editHistory.map((edit, idx) => (
+                <li key={idx}>{edit}</li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="flex items-center">
+            <Textarea
+              className="bg-white resize-none rounded-none fixed-0 bottom-0 text-lg w-80 h-18 shadow-md"
+              placeholder="Suggest changes!"
+              value={editQuery}
+              onChange={(e) => setEditQuery(e.target.value)}
+            />
+            <Button
+              className="h-18 shadow-md rounded-none cursor-pointer"
+              onClick={handleEdit}
+            >
+              <ArrowUp />
+            </Button>
+          </div>
+        </div>
+      )}
     </>
   );
 }

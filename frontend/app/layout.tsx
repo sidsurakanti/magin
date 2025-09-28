@@ -4,7 +4,7 @@ import { sans, mono } from "@/styles/fonts";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "Magin.it",
+  title: "magin.it",
   description: "Imagine it!",
 };
 

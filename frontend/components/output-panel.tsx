@@ -11,6 +11,7 @@ export default function OutputPanel() {
 
   useEffect(() => {
     if (status === "done") setTab("video");
+    if (status === "editing") setTab("source");
   }, [status]);
 
   return (
@@ -18,9 +19,9 @@ export default function OutputPanel() {
       <Tabs
         value={tab}
         onValueChange={setTab}
-        className="h-full px-12 pb-0 pt-4 flex items-center"
+        className="h-full flex items-center"
       >
-        <div className="h-1/15 w-full flex items-center justify-center ">
+        <div className="mt-2 h-1/15 w-full flex items-center justify-center">
           <TabsList>
             <TabsTrigger value="source" className="cursor-pointer">
               source
@@ -29,7 +30,6 @@ export default function OutputPanel() {
             <TabsTrigger
               value="video"
               className={"cursor-pointer disabled:cursor-not-allowed"}
-              disabled={status !== "done"}
             >
               video
             </TabsTrigger>

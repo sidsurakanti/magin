@@ -18,7 +18,8 @@ export function VideoPanel() {
           src={videoUrl as string}
           controls
           autoPlay
-          className="aspect-video max-w-[1280px] w-full rounded-none shadow-md"
+          loop
+          className="mt-2 aspect-video max-w-[1280px] w-fit rounded-none"
         />
       </TabsContent>
     </>
