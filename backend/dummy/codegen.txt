@@ -1,0 +1,193 @@
+```python
+from manim import *
+
+class scn(Scene):
+    def construct(self):
+        # Step 1: Setup Matrices (5 seconds)
+        
+        # Create matrices with proper spacing
+        matrix_a = Matrix([[2, 3], [1, 4]], element_to_mobject_config={"font_size": 20})
+        label_a = MathTex("A", font_size=24).next_to(matrix_a, UP, buff=0.2)
+        group_a = VGroup(matrix_a, label_a)
+        
+        matrix_b = Matrix([[5, 1], [2, 6]], element_to_mobject_config={"font_size": 20})
+        label_b = MathTex("B", font_size=24).next_to(matrix_b, UP, buff=0.2)
+        group_b = VGroup(matrix_b, label_b)
+        
+        # Empty result matrix with question marks
+        matrix_c = Matrix([["?", "?"], ["?", "?"]], element_to_mobject_config={"font_size": 20})
+        label_c = MathTex("C", font_size=24).next_to(matrix_c, UP, buff=0.2)
+        group_c = VGroup(matrix_c, label_c)
+        
+        # Arrange matrices horizontally in visuals zone (middle 55%)
+        matrices_group = VGroup(group_a, group_b, group_c).arrange(RIGHT, buff=1.0)
+        matrices_group.move_to(UP * 0.5)  # Center in visuals zone
+        
+        # Equation below matrices
+        equation = MathTex("A \\times B = C", font_size=22).next_to(matrices_group, DOWN, buff=0.5)
+        
+        # Dimension annotations
+        dim_a = MathTex("2 \\times 2", font_size=16).next_to(group_a, DOWN, buff=0.8)
+        dim_b = MathTex("2 \\times 2", font_size=16).next_to(group_b, DOWN, buff=0.8)
+        dim_c = MathTex("2 \\times 2", font_size=16).next_to(group_c, DOWN, buff=0.8)
+        
+        # Narration zone (top 7%)
+        narration1 = Text("Matrix multiplication: combining rows and columns", font_size=18)
+        narration1.to_edge(UP, buff=0.3)
+        
+        # Steps zone (bottom 38%)
+        steps1 = MathTex("A \\times B = ?", font_size=20)
+        steps1.to_edge(DOWN, buff=1.0).align_to(LEFT, LEFT).shift(RIGHT * 0.5)
+        
+        # Animate step 1
+        self.play(Write(narration1))
+        self.play(Create(matrices_group), Write(equation))
+        self.play(Write(VGroup(dim_a, dim_b, dim_c)), Write(steps1))
+        self.wait(2)
+        
+        # Step 2: First Cell Calculation (8 seconds)
+        
+        # Clear previous narration and steps
+        self.play(FadeOut(narration1), FadeOut(steps1))
+        
+        # New narration
+        narration2 = Text("Row 1 of A times Column 1 of B gives C[1,1]", font_size=18)
+        narration2.to_edge(UP, buff=0.3)
+        
+        # Highlight row 1 of A and column 1 of B
+        row1_highlight = SurroundingRectangle(VGroup(matrix_a.get_entries()[0], matrix_a.get_entries()[1]), 
+                                            color=BLUE, buff=0.1)
+        col1_highlight = SurroundingRectangle(VGroup(matrix_b.get_entries()[0], matrix_b.get_entries()[2]), 
+                                            color=GREEN, buff=0.1)
+        
+        # Calculation steps
+        calc_step1 = MathTex("\\text{Row 1} \\cdot \\text{Column 1}", font_size=18)
+        calc_step2 = MathTex("(2 \\times 5) + (3 \\times 2)", font_size=18)
+        calc_step3 = MathTex("10 + 6", font_size=18)
+        calc_step4 = MathTex("= 16", font_size=18)
+        
+        calc_group = VGroup(calc_step1, calc_step2, calc_step3, calc_step4).arrange(DOWN, aligned_edge=LEFT, buff=0.3)
+        calc_group.to_edge(DOWN, buff=0.5).align_to(LEFT, LEFT).shift(RIGHT * 0.5)
+        
+        self.play(Write(narration2))
+        self.play(Create(row1_highlight), Create(col1_highlight))
+        self.play(Write(calc_step1))
+        self.play(Write(calc_step2))
+        self.play(Write(calc_step3))
+        self.play(Write(calc_step4))
+        
+        # Fill C[1,1] with 16
+        new_c11 = MathTex("16", font_size=20, color=YELLOW)
+        new_c11.move_to(matrix_c.get_entries()[0].get_center())
+        c11_highlight = SurroundingRectangle(new_c11, color=YELLOW, buff=0.1)
+        
+        self.play(Transform(matrix_c.get_entries()[0], new_c11), Create(c11_highlight))
+        self.wait(2)
+        
+        # Step 3: Second Cell Pattern (8 seconds)
+        
+        # Clear previous narration and calculation
+        self.play(FadeOut(narration2), FadeOut(calc_group))
+        
+        narration3 = Text("Same row, next column: Row 1 of A times Column 2 of B", font_size=18)
+        narration3.to_edge(UP, buff=0.3)
+        
+        # Remove column 1 highlight, add column 2 highlight
+        col2_highlight = SurroundingRectangle(VGroup(matrix_b.get_entries()[1], matrix_b.get_entries()[3]), 
+                                            color=GREEN, buff=0.1)
+        
+        # New calculation
+        calc2_step1 = MathTex("\\text{Row 1} \\cdot \\text{Column 2}", font_size=18)
+        calc2_step2 = MathTex("(2 \\times 1) + (3 \\times 6)", font_size=18)
+        calc2_step3 = MathTex("2 + 18", font_size=18)
+        calc2_step4 = MathTex("= 20", font_size=18)
+        
+        calc2_group = VGroup(calc2_step1, calc2_step2, calc2_step3, calc2_step4).arrange(DOWN, aligned_edge=LEFT, buff=0.3)
+        calc2_group.to_edge(DOWN, buff=0.5).align_to(LEFT, LEFT).shift(RIGHT * 0.5)
+        
+        self.play(Write(narration3))
+        self.play(Transform(col1_highlight, col2_highlight))
+        self.play(Write(calc2_step1))
+        self.play(Write(calc2_step2))
+        self.play(Write(calc2_step3))
+        self.play(Write(calc2_step4))
+        
+        # Fill C[1,2] with 20, remove highlight from C[1,1]
+        new_c12 = MathTex("20", font_size=20, color=YELLOW)
+        new_c12.move_to(matrix_c.get_entries()[1].get_center())
+        c12_highlight = SurroundingRectangle(new_c12, color=YELLOW, buff=0.1)
+        
+        self.play(FadeOut(c11_highlight), Transform(matrix_c.get_entries()[1], new_c12), Create(c12_highlight))
+        self.wait(2)
+        
+        # Step 4: Second Row Calculations (10 seconds)
+        
+        # Clear previous narration and calculation
+        self.play(FadeOut(narration3), FadeOut(calc2_group))
+        
+        narration4 = Text("Row 2 of A with each column of B", font_size=18)
+        narration4.to_edge(UP, buff=0.3)
+        
+        # Switch to row 2 of A
+        row2_highlight = SurroundingRectangle(VGroup(matrix_a.get_entries()[2], matrix_a.get_entries()[3]), 
+                                            color=BLUE, buff=0.1)
+        col1_highlight_new = SurroundingRectangle(VGroup(matrix_b.get_entries()[0], matrix_b.get_entries()[2]), 
+                                                color=GREEN, buff=0.1)
+        
+        self.play(Write(narration4))
+        self.play(Transform(row1_highlight, row2_highlight), Transform(col1_highlight, col1_highlight_new))
+        
+        # Calculate C[2,1]
+        calc3 = MathTex("(1 \\times 5) + (4 \\times 2) = 5 + 8 = 13", font_size=18)
+        calc3.to_edge(DOWN, buff=1.0).align_to(LEFT, LEFT).shift(RIGHT * 0.5)
+        
+        self.play(Write(calc3))
+        
+        # Fill C[2,1] with 13
+        new_c21 = MathTex("13", font_size=20, color=YELLOW)
+        new_c21.move_to(matrix_c.get_entries()[2].get_center())
+        
+        self.play(FadeOut(c12_highlight), Transform(matrix_c.get_entries()[2], new_c21))
+        self.wait(1)
+        
+        # Switch to column 2 and calculate C[2,2]
+        col2_highlight_new = SurroundingRectangle(VGroup(matrix_b.get_entries()[1], matrix_b.get_entries()[3]), 
+                                                color=GREEN, buff=0.1)
+        
+        calc4 = MathTex("(1 \\times 1) + (4 \\times 6) = 1 + 24 = 25", font_size=18)
+        calc4.next_to(calc3, DOWN, buff=0.3).align_to(calc3, LEFT)
+        
+        self.play(Transform(col1_highlight, col2_highlight_new), FadeOut(calc3), Write(calc4))
+        
+        # Fill C[2,2] with 25
+        new_c22 = MathTex("25", font_size=20, color=YELLOW)
+        new_c22.move_to(matrix_c.get_entries()[3].get_center())
+        
+        self.play(Transform(matrix_c.get_entries()[3], new_c22))
+        self.wait(2)
+        
+        # Step 5: Final Result (4 seconds)
+        
+        # Clear all highlights and calculations
+        self.play(FadeOut(narration4), FadeOut(calc4))
+        self.play(FadeOut(row1_highlight), FadeOut(col1_highlight))
+        
+        narration5 = Text("Matrix multiplication complete!", font_size=18)
+        narration5.to_edge(UP, buff=0.3)
+        
+        # Summary in steps zone
+        summary = MathTex("\\text{Each cell} = (\\text{row of A}) \\cdot (\\text{column of B})", font_size=18)
+        summary.to_edge(DOWN, buff=1.0).align_to(LEFT, LEFT).shift(RIGHT * 0.5)
+        
+        # Final highlight around result matrix
+        final_highlight = SurroundingRectangle(group_c, color=WHITE, buff=0.2)
+        
+        self.play(Write(narration5))
+        self.play(Write(summary))
+        self.play(Create(final_highlight))
+        self.wait(2)
+        
+        # Clean up dimensions for final view
+        self.play(FadeOut(VGroup(dim_a, dim_b, dim_c)))
+        self.wait(1)
+```

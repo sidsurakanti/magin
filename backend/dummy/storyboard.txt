@@ -1,0 +1,207 @@
+<think>
+Cross products are a fundamental vector operation that produces a vector perpendicular to two input vectors. The key concepts to cover are:
+
+1. Definition and geometric interpretation (perpendicular result)
+2. Right-hand rule for direction
+3. Magnitude calculation (area of parallelogram)
+4. Component-wise calculation formula
+5. Properties (anticommutative, distributive)
+
+For optimal flow:
+1. Start with geometric setup - two vectors in 3D space
+2. Show the perpendicular result vector
+3. Demonstrate right-hand rule
+4. Show magnitude relates to parallelogram area
+5. Break down the component formula
+6. Quick properties summary
+
+Layout choice: Layout B works best here since we need wide 3D-style vector diagrams and the component formula will be horizontally heavy with multiple vectors displayed.
+</think>
+
+# Cross Product Animation Sequence
+
+## Step 1: Vector Setup
+**Duration: 8 seconds**
+
+#### Layout
+- Base Layout: Layout B
+- Zone Contents:
+    - Narration: "Cross product takes two vectors and produces a third vector perpendicular to both"
+    - Visuals: Two 3D-style vectors **a** and **b** originating from origin, positioned to show clear angle between them
+    - Steps: Vector labels **a** = [a₁, a₂, a₃] and **b** = [b₁, b₂, b₃] positioned side by side
+
+#### Actions
+- Create coordinate system with x, y, z axes labeled
+- Draw vector **a** in red from origin, angled upward-right
+- Draw vector **b** in blue from origin, angled upward-left  
+- Add vector labels **a** and **b** next to their respective vectors
+- Show component representations **a** = [a₁, a₂, a₃] and **b** = [b₁, b₂, b₃] in steps zone
+
+#### Active Elements
+- Coordinate axes (x, y, z)
+- Vector **a** (red) with label
+- Vector **b** (blue) with label
+- Component representations in steps zone
+
+#### Carry Over Elements
+- All active elements continue to next step
+
+#### Cleanup
+- Scene is clean, no cleanup needed
+
+## Step 2: Perpendicular Result Vector
+**Duration: 10 seconds**
+
+#### Layout
+- Base Layout: Layout B
+- Zone Contents:
+    - Narration: "The result **a** × **b** is perpendicular to both original vectors"
+    - Visuals: Original vectors plus new perpendicular vector **c** = **a** × **b**
+    - Steps: Formula **a** × **b** = **c** with perpendicular symbol ⊥
+
+#### Actions
+- Draw result vector **c** in green, perpendicular to the plane formed by **a** and **b**
+- Add label **c** = **a** × **b** next to the green vector
+- Highlight perpendicularity with small right-angle symbols where **c** meets **a** and **b**
+- Update steps zone to show **a** × **b** = **c**, **c** ⊥ **a**, **c** ⊥ **b**
+
+#### Active Elements
+- Coordinate axes
+- Vector **a** (red) with label
+- Vector **b** (blue) with label  
+- Vector **c** (green) with label **c** = **a** × **b**
+- Right-angle symbols
+- Updated formula in steps zone
+
+#### Carry Over Elements
+- All vectors and axes continue to next step
+- Right-angle symbols will be removed in step 4
+
+#### Cleanup
+- Remove original component representations from steps zone
+- Shift remaining step content up to fill space
+
+## Step 3: Right-Hand Rule
+**Duration: 12 seconds**
+
+#### Layout
+- Base Layout: Layout B
+- Zone Contents:
+    - Narration: "Direction follows the right-hand rule: fingers curl from **a** to **b**, thumb points toward **a** × **b**"
+    - Visuals: Vectors with curved arrow showing rotation from **a** to **b**, hand diagram
+    - Steps: Right-hand rule explanation with directional indicators
+
+#### Actions
+- Add curved arrow from **a** to **b** showing rotation direction
+- Create small hand diagram showing fingers curling from **a** to **b** direction
+- Add thumb indicator pointing in direction of **c**
+- Briefly highlight vector **c** with yellow glow
+- Update steps zone with "Fingers: **a** → **b**, Thumb: **a** × **b** direction"
+
+#### Active Elements
+- All vectors and axes
+- Curved rotation arrow
+- Hand diagram with thumb indicator
+- Right-hand rule text in steps zone
+
+#### Carry Over Elements
+- Vectors **a**, **b**, **c** and axes continue
+- Hand diagram will be removed in step 5
+
+#### Cleanup
+- Remove right-angle symbols from step 2
+- Keep curved arrow for one more step
+
+## Step 4: Magnitude and Area
+**Duration: 12 seconds**
+
+#### Layout
+- Base Layout: Layout B
+- Zone Contents:
+    - Narration: "Magnitude |**a** × **b**| equals the area of the parallelogram formed by **a** and **b**"
+    - Visuals: Parallelogram formed by vectors with area shading
+    - Steps: |**a** × **b**| = |**a**| |**b**| sin θ formula
+
+#### Actions
+- Draw parallelogram formed by vectors **a** and **b** with light gray fill
+- Add angle θ indicator between **a** and **b**
+- Show magnitude formula |**a** × **b**| = |**a**| |**b**| sin θ in steps zone
+- Briefly pulse the parallelogram area to emphasize connection
+- Add "Area = |**a**| |**b**| sin θ" below the magnitude formula
+
+#### Active Elements
+- All vectors and axes
+- Parallelogram with area shading
+- Angle θ indicator
+- Magnitude formulas in steps zone
+
+#### Carry Over Elements
+- Vectors continue to next step
+- Parallelogram will be faded in step 5
+
+#### Cleanup
+- Remove curved arrow from step 3
+- Remove hand diagram
+- Shift step content up after removal
+
+## Step 5: Component Formula
+**Duration: 15 seconds**
+
+#### Layout
+- Base Layout: Layout B
+- Zone Contents:
+    - Narration: "Components calculated using determinant-like expansion"
+    - Visuals: Vectors with component breakdown
+    - Steps: **a** × **b** = [a₂b₃ - a₃b₂, a₃b₁ - a₁b₃, a₁b₂ - a₂b₁]
+
+#### Actions
+- Fade parallelogram to 20% opacity for context
+- Show component formula **a** × **b** = [a₂b₃ - a₃b₂, a₃b₁ - a₁b₃, a₁b₂ - a₂b₁] in steps zone
+- Highlight each component (x, y, z) of result vector **c** in sequence
+- Color-code components: x-component in red, y-component in green, z-component in blue
+- Show brief determinant matrix structure: |**i** **j** **k**| |a₁ a₂ a₃| |b₁ b₂ b₃|
+
+#### Active Elements
+- All vectors and axes
+- Faded parallelogram (for context)
+- Component formula with color coding
+- Determinant matrix structure
+
+#### Carry Over Elements
+- Vectors and component formula continue to final step
+
+#### Cleanup
+- Remove angle θ indicator
+- Remove magnitude formulas from previous step
+- Remove hand diagram remnants if any
+
+## Step 6: Properties Summary
+**Duration: 8 seconds**
+
+#### Layout
+- Base Layout: Layout B
+- Zone Contents:
+    - Narration: "Key properties: anticommutative and distributive"
+    - Visuals: Original vectors maintained for reference
+    - Steps: **a** × **b** = -(**b** × **a**), **a** × (**b** + **c**) = **a** × **b** + **a** × **c**
+
+#### Actions
+- Keep vectors **a**, **b**, **c** visible but slightly faded for reference
+- Replace component formula with key properties in steps zone
+- Show **a** × **b** = -(**b** × **a**) with emphasis on negative sign
+- Show distributive property **a** × (**b** + **c**) = **a** × **b** + **a** × **c**
+- Add final note: "Result is always perpendicular to both input vectors"
+
+#### Active Elements
+- Faded reference vectors
+- Properties formulas in steps zone
+- Final summary note
+
+#### Carry Over Elements
+- None (final step)
+
+#### Cleanup
+- Remove faded parallelogram
+- Remove determinant matrix structure
+- Remove component color coding
+- Clean final scene with just essential properties displayed
