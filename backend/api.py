@@ -22,6 +22,9 @@ load_dotenv()
 
 app = FastAPI()
 
+DUMMY_MODE = False
+STREAM = False
+
 redice = aioredis.from_url(
     os.getenv("REDIS_URL", "redis://localhost:6379"), db=1, decode_responses=True
 )
@@ -70,6 +73,28 @@ def redis_flush_stream(
     return f
 
 
+async def dummy(
+    fp: str,
+    stream: bool = False,
+    stream_handler: Optional[Callable[[str], Awaitable[Any]]] = None,
+):
+    path = Path(fp)
+    if not path.exists():
+        raise FileNotFoundError(f"Dummy file {fp} not found.")
+
+    text = path.read_text(encoding="utf8")
+
+    if not stream:
+        return text
+
+    for line in text.splitlines():
+        if stream_handler:
+            await stream_handler(line + "\n")
+            await asyncio.sleep(0.01)
+
+    return text
+
+
 async def _pipeline(redis_client: AsyncRedis, job_id: UUID, base_prompt: str):
     client = await get_anthropic_client()
 
@@ -84,32 +109,62 @@ async def _pipeline(redis_client: AsyncRedis, job_id: UUID, base_prompt: str):
     try:
         await set_job_status(redis_client, job_id, "storyboarding")
 
-        board = await query_anthropic(
-            client,
-            base_prompt,
-            STORYBOARD_PROMPT,
-            stream=True,
-            stream_handler=redis_flush_stream(
-                redis_client, f"job:{job_id}:stream:storyboard"
-            ),
-        )
+        # dummy for local testing
+        if DUMMY_MODE:
+            if STREAM:
+                board = await dummy(
+                    "dummy/storyboard.txt",
+                    stream=True,
+                    stream_handler=redis_flush_stream(
+                        redis_client, f"job:{job_id}:stream:storyboard"
+                    ),
+                )
+            else:
+                board = await dummy("dummy/storyboard.txt")
+                await redis_client.rpush(f"job:{job_id}:stream:storyboard", board)  # type: ignore
 
-        await set_job_status(redis_client, job_id, "code-generating")
-        code = await query_anthropic(
-            client,
-            board,
-            CODEGEN_PROMPT,
-            stream=True,
-            stream_handler=redis_flush_stream(
-                redis_client, f"job:{job_id}:stream:codegen"
-            ),
-        )
+            await set_job_status(redis_client, job_id, "code-generating")
+
+            if STREAM:
+                code = await dummy(
+                    "dummy/codegen.txt",
+                    stream=True,
+                    stream_handler=redis_flush_stream(
+                        redis_client, f"job:{job_id}:stream:codegen"
+                    ),
+                )
+            else:
+                code = await dummy("dummy/codegen.txt")
+                await redis_client.rpush(f"job:{job_id}:stream:codegen", code)  # type: ignore
+
+        else:
+            board = await query_anthropic(
+                client,
+                base_prompt,
+                STORYBOARD_PROMPT,
+                stream=True,
+                stream_handler=redis_flush_stream(
+                    redis_client, f"job:{job_id}:stream:storyboard"
+                ),
+            )
+
+            await set_job_status(redis_client, job_id, "code-generating")
+
+            code = await query_anthropic(
+                client,
+                board,
+                CODEGEN_PROMPT,
+                stream=True,
+                stream_handler=redis_flush_stream(
+                    redis_client, f"job:{job_id}:stream:codegen"
+                ),
+            )
 
         # write locally for now
         # TODO: write to s3 bucket
-        with open(in_fp, "w", encoding="utf8") as file:
-            file.write(extract_codeblock(code))
-
+        if DUMMY_MODE:
+            code = extract_codeblock(code[:-4])  # some weird errror with dummy file
+            in_fp.write_text(extract_codeblock(code), encoding="utf8")
         (job_dir / "out.py").write_text(in_fp.read_text(), encoding="utf8")
 
         await set_job_status(redis_client, job_id, "rendering")
