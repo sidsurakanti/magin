@@ -89,7 +89,7 @@ export default function QueryPanel() {
 
   return (
     <>
-      <div className="flex items-center gap-5">
+      <div className="flex items-center gap-2">
         <Input
           className="rounded-none text-lg"
           placeholder="What do you want to visualize today?"
@@ -105,7 +105,7 @@ export default function QueryPanel() {
           className="rounded-none shadow-sm cursor-pointer"
           onClick={handleSubmit}
         >
-          Create
+          CREATE
         </Button>
       </div>
 

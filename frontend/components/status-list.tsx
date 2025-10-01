@@ -28,7 +28,7 @@ export default function StatusList() {
             status === activeStatus
               ? "text-black font-medium text-3xl mt-0.5 mb-1"
               : "text-neutral-600 text-base",
-            "uppercase",
+            "uppercase hover:scale-110 cursor-pointer transition-all",
           )}
         >
           {status}

@@ -31,10 +31,10 @@ export function SourcePanel() {
   if (status === "idle") {
     return (
       <div className="h-full w-full flex items-center justify-center">
-        <p className="text-neutral-700 text-xl font-light">
-          Submit a prompt to get started.
+        <p className="text-neutral-700 text-2xl font-light">
+          Don't just read it. See it.
         </p>
-        <div className="absolute -z-[1000] top-1/2 left-1/2 w-100 h-105 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-br from-sky-200 to-blue-200 rounded-full blur-3xl opacity-50 animate-spin" />
+        <div className="absolute -z-[1000] top-1/2 left-1/2 w-120 h-40 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-br from-pink-200 to-pink-100 rounded-full blur-3xl opacity-10 animate-pulse" />
       </div>
     );
   }
@@ -49,7 +49,7 @@ export function SourcePanel() {
           ref={storyboardRef}
           className={cn(
             storyboardChunk ? "bg-pink-50" : "",
-            "prose text-xs h-full w-[600px] overflow-auto markdown flex flex-col items-center px-6 py-2 rounded-md",
+            "prose text-xs h-full w-[600px] overflow-auto markdown flex flex-col items-center px-6 py-3 rounded-md",
           )}
         >
           {storyboardChunk && (
@@ -61,7 +61,7 @@ export function SourcePanel() {
 
         <div
           ref={codegenRef}
-          className="font-mono prose text-xs h-full w-[600px] overflow-auto markdown rounded-md"
+          className="font-mono prose text-xs h-full w-[600px] overflow-auto rounded-md"
         >
           {codegenChunk && (
             <SyntaxHighlighter language="python">
