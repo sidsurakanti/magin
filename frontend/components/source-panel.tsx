@@ -4,12 +4,13 @@ import { TabsContent } from "@/components/ui/tabs";
 import { type AppStore, useAppStore } from "@/lib/store";
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 export function SourcePanel() {
-  const { status, storyboardChunk, codegenChunk } = useAppStore<AppStore>(
+  let { status, storyboardChunk, codegenChunk } = useAppStore<AppStore>(
     (state) => state as AppStore,
   );
   const storyboardRef = useRef<HTMLDivElement>(null);
@@ -60,12 +61,12 @@ export function SourcePanel() {
 
         <div
           ref={codegenRef}
-          className="prose text-xs h-full w-[600px] overflow-auto markdown rounded-md"
+          className="font-mono prose text-xs h-full w-[600px] overflow-auto markdown rounded-md"
         >
           {codegenChunk && (
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {codegenChunk}
-            </ReactMarkdown>
+            <SyntaxHighlighter language="python">
+              {codegenChunk.split("\n").slice(1, -2).join("\n")}
+            </SyntaxHighlighter>
           )}
         </div>
       </TabsContent>

@@ -127,6 +127,10 @@
     @apply border border-red-500;
   }
 
+  code {
+    @apply !font-mono;
+  }
+
   video::-webkit-media-controls-volume-slider,
   video::-webkit-media-controls-mute-button {
     display: none !important;
