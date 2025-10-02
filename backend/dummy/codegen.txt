@@ -3,191 +3,284 @@ from manim import *
 
 class scn(Scene):
     def construct(self):
-        # Step 1: Setup Matrices (5 seconds)
+        # Step 1: Function and Gradient Visualization
+        # Layout A: Visuals left, Steps right, Narration bottom
         
-        # Create matrices with proper spacing
-        matrix_a = Matrix([[2, 3], [1, 4]], element_to_mobject_config={"font_size": 20})
-        label_a = MathTex("A", font_size=24).next_to(matrix_a, UP, buff=0.2)
-        group_a = VGroup(matrix_a, label_a)
+        # Create coordinate system in left zone
+        axes = Axes(
+            x_range=[-3, 3, 1],
+            y_range=[-3, 3, 1],
+            x_length=4,
+            y_length=4,
+            tips=False
+        ).scale(0.8).to_edge(LEFT, buff=0.5)
         
-        matrix_b = Matrix([[5, 1], [2, 6]], element_to_mobject_config={"font_size": 20})
-        label_b = MathTex("B", font_size=24).next_to(matrix_b, UP, buff=0.2)
-        group_b = VGroup(matrix_b, label_b)
+        # Create contour lines for f(x,y) = x² + y²
+        contours = VGroup()
+        for r in [0.5, 1.0, 1.5, 2.0, 2.5]:
+            circle = Circle(radius=r * 0.8, color=WHITE, stroke_width=1)
+            circle.move_to(axes.c2p(0, 0))
+            contours.add(circle)
         
-        # Empty result matrix with question marks
-        matrix_c = Matrix([["?", "?"], ["?", "?"]], element_to_mobject_config={"font_size": 20})
-        label_c = MathTex("C", font_size=24).next_to(matrix_c, UP, buff=0.2)
-        group_c = VGroup(matrix_c, label_c)
+        # Create gradient vectors at several points
+        gradient_points = [(1, 0.5), (-1, 1), (0.5, -1), (-0.5, -0.5), (1.5, 1)]
+        gradient_vectors = VGroup()
         
-        # Arrange matrices horizontally in visuals zone (middle 55%)
-        matrices_group = VGroup(group_a, group_b, group_c).arrange(RIGHT, buff=1.0)
-        matrices_group.move_to(UP * 0.5)  # Center in visuals zone
+        for x, y in gradient_points:
+            # Gradient of x² + y² is (2x, 2y)
+            grad_x, grad_y = 2*x, 2*y
+            # Scale down for visualization
+            scale_factor = 0.3
+            
+            start_point = axes.c2p(x, y)
+            end_point = axes.c2p(x + grad_x * scale_factor, y + grad_y * scale_factor)
+            
+            vector = Arrow(start_point, end_point, color=BLUE, buff=0, stroke_width=3, max_tip_length_to_length_ratio=0.2)
+            gradient_vectors.add(vector)
         
-        # Equation below matrices
-        equation = MathTex("A \\times B = C", font_size=22).next_to(matrices_group, DOWN, buff=0.5)
+        # Steps text in right zone
+        step_text = MathTex(
+            r"\text{At each point, the gradient vector}\\",
+            r"\text{shows the steepest uphill direction}",
+            font_size=20
+        ).arrange(DOWN, aligned_edge=LEFT, buff=0.2).to_edge(RIGHT, buff=0.5).shift(UP * 1.5)
         
-        # Dimension annotations
-        dim_a = MathTex("2 \\times 2", font_size=16).next_to(group_a, DOWN, buff=0.8)
-        dim_b = MathTex("2 \\times 2", font_size=16).next_to(group_b, DOWN, buff=0.8)
-        dim_c = MathTex("2 \\times 2", font_size=16).next_to(group_c, DOWN, buff=0.8)
-        
-        # Narration zone (top 7%)
-        narration1 = Text("Matrix multiplication: combining rows and columns", font_size=18)
-        narration1.to_edge(UP, buff=0.3)
-        
-        # Steps zone (bottom 38%)
-        steps1 = MathTex("A \\times B = ?", font_size=20)
-        steps1.to_edge(DOWN, buff=1.0).align_to(LEFT, LEFT).shift(RIGHT * 0.5)
+        # Narration at bottom
+        narration = Text("Gradients point in the direction of steepest increase", font_size=18).to_edge(DOWN, buff=0.3)
         
         # Animate step 1
-        self.play(Write(narration1))
-        self.play(Create(matrices_group), Write(equation))
-        self.play(Write(VGroup(dim_a, dim_b, dim_c)), Write(steps1))
-        self.wait(2)
+        self.play(Create(axes), run_time=1)
+        self.play(Create(contours), run_time=2)
+        self.play(Create(gradient_vectors), run_time=2)
+        self.play(Write(step_text), run_time=1.5)
+        self.play(Write(narration), run_time=1.5)
         
-        # Step 2: First Cell Calculation (8 seconds)
+        # Step 2: Gradient Magnitude Visualization
+        self.wait(1)
         
-        # Clear previous narration and steps
-        self.play(FadeOut(narration1), FadeOut(steps1))
+        # Remove old content
+        self.play(FadeOut(step_text), FadeOut(narration), run_time=0.5)
+        
+        # Create new gradient vectors with varying magnitudes
+        new_gradient_vectors = VGroup()
+        highlight_short = None
+        highlight_long = None
+        
+        for i, (x, y) in enumerate(gradient_points):
+            grad_x, grad_y = 2*x, 2*y
+            # Vary scale factor based on distance from origin
+            distance = (x**2 + y**2)**0.5
+            scale_factor = 0.15 + distance * 0.1  # Closer to origin = shorter vectors
+            
+            start_point = axes.c2p(x, y)
+            end_point = axes.c2p(x + grad_x * scale_factor, y + grad_y * scale_factor)
+            
+            vector = Arrow(start_point, end_point, color=BLUE, buff=0, stroke_width=3, max_tip_length_to_length_ratio=0.2)
+            new_gradient_vectors.add(vector)
+            
+            # Mark short and long vectors for highlighting
+            if i == 3:  # (-0.5, -0.5) - close to origin
+                highlight_short = SurroundingRectangle(vector, color=YELLOW, buff=0.1)
+            elif i == 4:  # (1.5, 1) - far from origin  
+                highlight_long = SurroundingRectangle(vector, color=RED, buff=0.1)
+        
+        # New step text
+        step_text2 = MathTex(
+            r"\text{Longer vectors = steeper slope}\\",
+            r"\text{Shorter vectors = gentler slope}",
+            font_size=20
+        ).arrange(DOWN, aligned_edge=LEFT, buff=0.2).to_edge(RIGHT, buff=0.5).shift(UP * 1.5)
         
         # New narration
-        narration2 = Text("Row 1 of A times Column 1 of B gives C[1,1]", font_size=18)
-        narration2.to_edge(UP, buff=0.3)
+        narration2 = Text("Gradient magnitude shows how steep the slope is", font_size=18).to_edge(DOWN, buff=0.3)
         
-        # Highlight row 1 of A and column 1 of B
-        row1_highlight = SurroundingRectangle(VGroup(matrix_a.get_entries()[0], matrix_a.get_entries()[1]), 
-                                            color=BLUE, buff=0.1)
-        col1_highlight = SurroundingRectangle(VGroup(matrix_b.get_entries()[0], matrix_b.get_entries()[2]), 
-                                            color=GREEN, buff=0.1)
+        # Animate step 2
+        self.play(Transform(gradient_vectors, new_gradient_vectors), run_time=2)
+        self.play(Create(highlight_short), Create(highlight_long), run_time=1.5)
+        self.play(Write(step_text2), run_time=1.5)
+        self.play(Write(narration2), run_time=2)
+        
+        # Step 3: Mathematical Definition
+        self.wait(1)
+        
+        # Remove old content
+        self.play(
+            FadeOut(gradient_vectors), 
+            FadeOut(highlight_short), 
+            FadeOut(highlight_long),
+            FadeOut(step_text2), 
+            FadeOut(narration2), 
+            run_time=1
+        )
+        
+        # Add point P at (2,1)
+        point_P = Dot(axes.c2p(2, 1), color=RED, radius=0.08)
+        
+        # Mathematical definition in steps zone
+        math_def = VGroup(
+            MathTex(r"\nabla f = \left(\frac{\partial f}{\partial x}, \frac{\partial f}{\partial y}\right)", font_size=22),
+            MathTex(r"\text{For } f(x,y) = x^2 + y^2:", font_size=22),
+            MathTex(r"\frac{\partial f}{\partial x} = 2x", font_size=22),
+            MathTex(r"\frac{\partial f}{\partial y} = 2y", font_size=22)
+        ).arrange(DOWN, aligned_edge=LEFT, buff=0.3).to_edge(RIGHT, buff=0.5).shift(UP * 1)
+        
+        # New narration
+        narration3 = Text("The gradient is the vector of partial derivatives", font_size=18).to_edge(DOWN, buff=0.3)
+        
+        # Animate step 3
+        self.play(Create(point_P), run_time=1)
+        self.play(Write(narration3), run_time=1.5)
+        for line in math_def:
+            self.play(Write(line), run_time=1.5)
+            self.wait(0.5)
+        
+        # Step 4: Gradient Calculation
+        self.wait(1)
+        
+        # Remove old narration
+        self.play(FadeOut(narration3), run_time=0.5)
         
         # Calculation steps
-        calc_step1 = MathTex("\\text{Row 1} \\cdot \\text{Column 1}", font_size=18)
-        calc_step2 = MathTex("(2 \\times 5) + (3 \\times 2)", font_size=18)
-        calc_step3 = MathTex("10 + 6", font_size=18)
-        calc_step4 = MathTex("= 16", font_size=18)
+        calc_steps = VGroup(
+            MathTex(r"\text{At point } (2,1):", font_size=22),
+            MathTex(r"\nabla f(2,1) = (2(2), 2(1))", font_size=22),
+            MathTex(r"\nabla f(2,1) = (4, 2)", font_size=22)
+        ).arrange(DOWN, aligned_edge=LEFT, buff=0.3).to_edge(RIGHT, buff=0.5).shift(DOWN * 0.5)
         
-        calc_group = VGroup(calc_step1, calc_step2, calc_step3, calc_step4).arrange(DOWN, aligned_edge=LEFT, buff=0.3)
-        calc_group.to_edge(DOWN, buff=0.5).align_to(LEFT, LEFT).shift(RIGHT * 0.5)
+        # Add gradient vector at point P
+        grad_at_P = Arrow(
+            axes.c2p(2, 1), 
+            axes.c2p(2 + 4*0.2, 1 + 2*0.2), 
+            color=BLUE, 
+            buff=0, 
+            stroke_width=4, 
+            max_tip_length_to_length_ratio=0.15
+        )
         
-        self.play(Write(narration2))
-        self.play(Create(row1_highlight), Create(col1_highlight))
-        self.play(Write(calc_step1))
-        self.play(Write(calc_step2))
-        self.play(Write(calc_step3))
-        self.play(Write(calc_step4))
+        # New narration
+        narration4 = Text("Calculate gradient at point (2,1)", font_size=18).to_edge(DOWN, buff=0.3)
         
-        # Fill C[1,1] with 16
-        new_c11 = MathTex("16", font_size=20, color=YELLOW)
-        new_c11.move_to(matrix_c.get_entries()[0].get_center())
-        c11_highlight = SurroundingRectangle(new_c11, color=YELLOW, buff=0.1)
+        # Animate step 4
+        self.play(Write(narration4), run_time=1)
         
-        self.play(Transform(matrix_c.get_entries()[0], new_c11), Create(c11_highlight))
-        self.wait(2)
+        # Shift math definition up and add calculation
+        self.play(math_def.animate.shift(UP * 0.8), run_time=0.8)
         
-        # Step 3: Second Cell Pattern (8 seconds)
+        for i, line in enumerate(calc_steps):
+            self.play(Write(line), run_time=1.2)
+            if i < len(calc_steps) - 1:
+                self.wait(0.3)
         
-        # Clear previous narration and calculation
-        self.play(FadeOut(narration2), FadeOut(calc_group))
+        self.play(Create(grad_at_P), run_time=1.5)
         
-        narration3 = Text("Same row, next column: Row 1 of A times Column 2 of B", font_size=18)
-        narration3.to_edge(UP, buff=0.3)
-        
-        # Remove column 1 highlight, add column 2 highlight
-        col2_highlight = SurroundingRectangle(VGroup(matrix_b.get_entries()[1], matrix_b.get_entries()[3]), 
-                                            color=GREEN, buff=0.1)
-        
-        # New calculation
-        calc2_step1 = MathTex("\\text{Row 1} \\cdot \\text{Column 2}", font_size=18)
-        calc2_step2 = MathTex("(2 \\times 1) + (3 \\times 6)", font_size=18)
-        calc2_step3 = MathTex("2 + 18", font_size=18)
-        calc2_step4 = MathTex("= 20", font_size=18)
-        
-        calc2_group = VGroup(calc2_step1, calc2_step2, calc2_step3, calc2_step4).arrange(DOWN, aligned_edge=LEFT, buff=0.3)
-        calc2_group.to_edge(DOWN, buff=0.5).align_to(LEFT, LEFT).shift(RIGHT * 0.5)
-        
-        self.play(Write(narration3))
-        self.play(Transform(col1_highlight, col2_highlight))
-        self.play(Write(calc2_step1))
-        self.play(Write(calc2_step2))
-        self.play(Write(calc2_step3))
-        self.play(Write(calc2_step4))
-        
-        # Fill C[1,2] with 20, remove highlight from C[1,1]
-        new_c12 = MathTex("20", font_size=20, color=YELLOW)
-        new_c12.move_to(matrix_c.get_entries()[1].get_center())
-        c12_highlight = SurroundingRectangle(new_c12, color=YELLOW, buff=0.1)
-        
-        self.play(FadeOut(c11_highlight), Transform(matrix_c.get_entries()[1], new_c12), Create(c12_highlight))
-        self.wait(2)
-        
-        # Step 4: Second Row Calculations (10 seconds)
-        
-        # Clear previous narration and calculation
-        self.play(FadeOut(narration3), FadeOut(calc2_group))
-        
-        narration4 = Text("Row 2 of A with each column of B", font_size=18)
-        narration4.to_edge(UP, buff=0.3)
-        
-        # Switch to row 2 of A
-        row2_highlight = SurroundingRectangle(VGroup(matrix_a.get_entries()[2], matrix_a.get_entries()[3]), 
-                                            color=BLUE, buff=0.1)
-        col1_highlight_new = SurroundingRectangle(VGroup(matrix_b.get_entries()[0], matrix_b.get_entries()[2]), 
-                                                color=GREEN, buff=0.1)
-        
-        self.play(Write(narration4))
-        self.play(Transform(row1_highlight, row2_highlight), Transform(col1_highlight, col1_highlight_new))
-        
-        # Calculate C[2,1]
-        calc3 = MathTex("(1 \\times 5) + (4 \\times 2) = 5 + 8 = 13", font_size=18)
-        calc3.to_edge(DOWN, buff=1.0).align_to(LEFT, LEFT).shift(RIGHT * 0.5)
-        
-        self.play(Write(calc3))
-        
-        # Fill C[2,1] with 13
-        new_c21 = MathTex("13", font_size=20, color=YELLOW)
-        new_c21.move_to(matrix_c.get_entries()[2].get_center())
-        
-        self.play(FadeOut(c12_highlight), Transform(matrix_c.get_entries()[2], new_c21))
+        # Step 5: Gradient Descent Application
         self.wait(1)
         
-        # Switch to column 2 and calculate C[2,2]
-        col2_highlight_new = SurroundingRectangle(VGroup(matrix_b.get_entries()[1], matrix_b.get_entries()[3]), 
-                                                color=GREEN, buff=0.1)
+        # Remove old content
+        self.play(
+            FadeOut(math_def), 
+            FadeOut(calc_steps), 
+            FadeOut(point_P), 
+            FadeOut(grad_at_P), 
+            FadeOut(narration4), 
+            run_time=1
+        )
         
-        calc4 = MathTex("(1 \\times 1) + (4 \\times 6) = 1 + 24 = 25", font_size=18)
-        calc4.next_to(calc3, DOWN, buff=0.3).align_to(calc3, LEFT)
+        # Gradient descent starting point
+        start_point = Dot(axes.c2p(3, 2), color=GREEN, radius=0.08)
         
-        self.play(Transform(col1_highlight, col2_highlight_new), FadeOut(calc3), Write(calc4))
+        # Create gradient descent path
+        path_points = [(3, 2), (2.4, 1.6), (1.92, 1.28), (1.54, 1.02), (1.23, 0.82)]
+        path_dots = VGroup()
+        path_arrows = VGroup()
         
-        # Fill C[2,2] with 25
-        new_c22 = MathTex("25", font_size=20, color=YELLOW)
-        new_c22.move_to(matrix_c.get_entries()[3].get_center())
+        for i in range(len(path_points)-1):
+            x, y = path_points[i]
+            next_x, next_y = path_points[i+1]
+            
+            # Current point
+            dot = Dot(axes.c2p(x, y), color=GREEN, radius=0.06)
+            path_dots.add(dot)
+            
+            # Arrow to next point
+            arrow = Arrow(
+                axes.c2p(x, y), 
+                axes.c2p(next_x, next_y), 
+                color=ORANGE, 
+                buff=0.06, 
+                stroke_width=3,
+                max_tip_length_to_length_ratio=0.2
+            )
+            path_arrows.add(arrow)
         
-        self.play(Transform(matrix_c.get_entries()[3], new_c22))
+        # Final point
+        final_dot = Dot(axes.c2p(path_points[-1][0], path_points[-1][1]), color=GREEN, radius=0.08)
+        final_highlight = SurroundingRectangle(final_dot, color=GREEN, buff=0.15)
+        
+        # Step explanation
+        step_text5 = MathTex(
+            r"\text{Move opposite to gradient direction}\\",
+            r"\text{to go downhill}",
+            font_size=20
+        ).arrange(DOWN, aligned_edge=LEFT, buff=0.2).to_edge(RIGHT, buff=0.5).shift(UP * 1.5)
+        
+        # New narration
+        narration5 = Text("Gradient descent uses gradients to find minimum points", font_size=18).to_edge(DOWN, buff=0.3)
+        
+        # Animate step 5
+        self.play(Write(narration5), run_time=1.5)
+        self.play(Write(step_text5), run_time=1.5)
+        self.play(Create(start_point), run_time=1)
+        
+        # Animate path progression
+        for i in range(len(path_dots)):
+            self.play(Create(path_dots[i]), run_time=0.8)
+            if i < len(path_arrows):
+                self.play(Create(path_arrows[i]), run_time=0.8)
+                self.wait(0.3)
+        
+        self.play(Create(final_dot), run_time=1)
+        self.play(Create(final_highlight), run_time=1)
+        
+        # Step 6: Summary
+        self.wait(1.5)
+        
+        # Remove gradient descent elements
+        self.play(
+            FadeOut(start_point),
+            FadeOut(path_dots),
+            FadeOut(path_arrows),
+            FadeOut(final_dot),
+            FadeOut(final_highlight),
+            FadeOut(step_text5),
+            FadeOut(narration5),
+            run_time=1.5
+        )
+        
+        # Add single clean gradient vector
+        clean_vector = Arrow(
+            axes.c2p(1.5, 1), 
+            axes.c2p(1.5 + 3*0.2, 1 + 2*0.2), 
+            color=BLUE, 
+            buff=0, 
+            stroke_width=4,
+            max_tip_length_to_length_ratio=0.15
+        )
+        
+        # Summary points
+        summary_points = VGroup(
+            MathTex(r"\bullet \text{ Points in steepest increase direction}", font_size=20),
+            MathTex(r"\bullet \text{ Magnitude shows steepness}", font_size=20),
+            MathTex(r"\bullet \text{ Used in optimization algorithms}", font_size=20)
+        ).arrange(DOWN, aligned_edge=LEFT, buff=0.3).to_edge(RIGHT, buff=0.5).shift(UP * 1)
+        
+        # Final narration
+        final_narration = Text("Gradients: direction of steepest increase, calculated from partial derivatives", font_size=18).to_edge(DOWN, buff=0.3)
+        
+        # Animate step 6
+        self.play(Create(clean_vector), run_time=1.5)
+        self.play(Write(final_narration), run_time=2)
+        self.play(Write(summary_points), run_time=2.5)
+        
         self.wait(2)
-        
-        # Step 5: Final Result (4 seconds)
-        
-        # Clear all highlights and calculations
-        self.play(FadeOut(narration4), FadeOut(calc4))
-        self.play(FadeOut(row1_highlight), FadeOut(col1_highlight))
-        
-        narration5 = Text("Matrix multiplication complete!", font_size=18)
-        narration5.to_edge(UP, buff=0.3)
-        
-        # Summary in steps zone
-        summary = MathTex("\\text{Each cell} = (\\text{row of A}) \\cdot (\\text{column of B})", font_size=18)
-        summary.to_edge(DOWN, buff=1.0).align_to(LEFT, LEFT).shift(RIGHT * 0.5)
-        
-        # Final highlight around result matrix
-        final_highlight = SurroundingRectangle(group_c, color=WHITE, buff=0.2)
-        
-        self.play(Write(narration5))
-        self.play(Write(summary))
-        self.play(Create(final_highlight))
-        self.wait(2)
-        
-        # Clean up dimensions for final view
-        self.play(FadeOut(VGroup(dim_a, dim_b, dim_c)))
-        self.wait(1)
 ```

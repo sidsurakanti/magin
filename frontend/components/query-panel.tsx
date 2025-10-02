@@ -92,7 +92,7 @@ export default function QueryPanel() {
       <div className="flex items-center gap-2">
         <Input
           className="rounded-none text-lg"
-          placeholder="What do you want to visualize today?"
+          placeholder="Visualize any Math/CS topic..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => {
