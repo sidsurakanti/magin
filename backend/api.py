@@ -90,7 +90,7 @@ async def dummy(
     for line in text.splitlines():
         if stream_handler:
             await stream_handler(line + "\n")
-            await asyncio.sleep(0.01)
+            await asyncio.sleep(0.05)
 
     return text
 
@@ -164,7 +164,8 @@ async def _pipeline(redis_client: AsyncRedis, job_id: UUID, base_prompt: str):
         # TODO: write to s3 bucket
         if DUMMY_MODE:
             code = extract_codeblock(code[:-4])  # some weird errror with dummy file
-            in_fp.write_text(extract_codeblock(code), encoding="utf8")
+
+        in_fp.write_text(extract_codeblock(code), encoding="utf8")
         (job_dir / "out.py").write_text(in_fp.read_text(), encoding="utf8")
 
         await set_job_status(redis_client, job_id, "rendering")
