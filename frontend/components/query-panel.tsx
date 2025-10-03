@@ -15,8 +15,6 @@ export default function QueryPanel() {
   const {
     status,
     jobId,
-    iteration,
-    videoUrl,
     setStoryboardChunk,
     setCodegenChunk,
     setVideoUrl,
@@ -85,6 +83,7 @@ export default function QueryPanel() {
     };
 
     return () => sse.close();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobId, reloadVersion]);
 
   return (

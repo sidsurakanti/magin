@@ -1,0 +1,45 @@
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  api:
+    build: ./backend
+    container_name: api
+    command: uv run fastapi dev api.py --host 0.0.0.0 --port 8000
+    volumes:
+      - ./backend:/app
+      - ./backend/renders:/app/renders
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+
+  worker:
+    build: ./backend
+    container_name: worker
+    command: uv run celery -A api.brocolli worker --loglevel=info
+    volumes:
+      - ./backend:/app
+      - ./backend/renders:/app/renders
+    depends_on:
+      - redis
+      - api
+
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    command: npm run start
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+    depends_on:
+      - api
+
+volumes:
+  redis_data:

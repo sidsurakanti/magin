@@ -10,7 +10,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 export function SourcePanel() {
-  let { status, storyboardChunk, codegenChunk } = useAppStore<AppStore>(
+  const { status, storyboardChunk, codegenChunk } = useAppStore<AppStore>(
     (state) => state as AppStore,
   );
   const storyboardRef = useRef<HTMLDivElement>(null);
@@ -32,7 +32,7 @@ export function SourcePanel() {
     return (
       <div className="h-full w-full flex items-center justify-center">
         <p className="text-neutral-700 text-2xl font-light">
-          Don't just read it. See it.
+          Don&apos;t just read it. See it.
         </p>
         <div className="absolute -z-[1000] top-1/2 left-1/2 w-120 h-40 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-br from-pink-200 to-pink-100 rounded-full blur-3xl opacity-10 animate-pulse" />
       </div>

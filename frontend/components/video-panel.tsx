@@ -2,8 +2,6 @@
 
 import { TabsContent } from "@/components/ui/tabs";
 import { type AppStore, useAppStore } from "@/lib/store";
-import { useRef } from "react";
-import { cn } from "@/lib/utils";
 
 export function VideoPanel() {
   const { jobId, videoUrl } = useAppStore<AppStore>(
