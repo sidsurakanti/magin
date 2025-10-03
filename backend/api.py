@@ -22,8 +22,8 @@ load_dotenv()
 
 app = FastAPI()
 
-DUMMY_MODE = False
-STREAM = False
+DUMMY_MODE = os.getenv("DUMMY_MODE", "true").lower() == "true"
+STREAM = os.getenv("DUMMY_MODE_STREAM", "true").lower() == "true"
 
 redice = aioredis.from_url(
     os.getenv("REDIS_URL", "redis://localhost:6379"), db=1, decode_responses=True
