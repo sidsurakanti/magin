@@ -37,8 +37,10 @@ async def query_anthropic(
         "max_tokens": max_tokens,
         "temperature": temperature,
         "messages": [{"role": "user", "content": message_content}],
-        "system": system_prompt,
     }
+
+    if system_prompt:
+        message_params["system"] = system_prompt
 
     if not stream:
         res = await client.messages.create(**message_params)

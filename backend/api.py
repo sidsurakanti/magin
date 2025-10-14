@@ -9,7 +9,7 @@ import json
 import asyncio
 import os
 from dotenv import load_dotenv
-from typing import Awaitable, Callable, Optional, Any
+from typing import Awaitable, Callable, Optional, Any, Union
 
 from celery import Celery
 import redis.asyncio as aioredis
@@ -53,9 +53,42 @@ async def ping():
     return {"message": "pong"}
 
 
+class HealthStatus(BaseModel):
+    redis: str
+    anthropic: str
+    celery: str
+
+
+@app.get("/health")
+async def health() -> HealthStatus:
+    status = HealthStatus(redis="UNKNOWN", anthropic="UNKNOWN", celery="UNKNOWN")
+
+    try:
+        await redice.ping()
+        status.redis = "HEALTHY"
+    except Exception as e:
+        status.redis = f"UNHEALTHY: {str(e)}"
+
+    try:
+        client = await get_anthropic_client()
+        await query_anthropic(client, "ping", max_tokens=1)
+        await client.close()
+        status.anthropic = "HEALTHY"
+    except Exception as e:
+        status.anthropic = f"UNHEALTHY: {str(e)}"
+
+    try:
+        brocolli.control.ping()
+        status.celery = "HEALTHY"
+    except Exception as e:
+        status.celery = f"UNHEALTHY: {str(e)}"
+
+    return status
+
+
 async def set_job_status(
     redis_client: AsyncRedis,
-    job_id: UUID | str,
+    job_id: Union[UUID, str],
     status: str,
     error: Optional[str] = None,
 ):

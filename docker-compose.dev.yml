@@ -1,0 +1,5 @@
+services:
+  frontend:
+    command: npm run dev
+    build:
+      dockerfile: ./Dockerfile.dev
