@@ -57,6 +57,7 @@ class HealthStatus(BaseModel):
     redis: str
     anthropic: str
     celery: str
+    dev_mode: bool = DUMMY_MODE
 
 
 @app.get("/health")
@@ -334,6 +335,7 @@ async def sse(job_id: str):
                     "storyboard": "".join(storyboard),
                     "codegen": "".join(codegen),
                 },
+                "dummy_mode": DUMMY_MODE,
             }
 
             if status:

@@ -6,6 +6,7 @@ type Health = {
   redis: string;
   anthropic: string;
   celery: string;
+  dev_mode: boolean;
 };
 
 export default async function Home() {
@@ -56,6 +57,19 @@ export default async function Home() {
             )}
           >
             {health.celery}
+          </p>
+        </span>
+        <span className="flex items-center gap-3">
+          DEV MODE
+          <p
+            className={cn(
+              health.dev_mode
+                ? "bg-emerald-100 text-emerald-700"
+                : "bg-neutral-200",
+              "lowercase rounded-md px-2 py-1 text-sm",
+            )}
+          >
+            {health.dev_mode ? "on" : "off"}
           </p>
         </span>
       </div>
