@@ -24,12 +24,17 @@ Anything related to Math and CS!
 
 ## Usage
 ```bash
-git clone https://github.com/sidsurakanti/repo.git && cd repo
+git clone https://github.com/sidsurakanti/magin.git && cd magin
 ```
 ```bash
 # rename .env.example to .env and replace ANTHROPIC_API_KEY
 ANTHROPIC_API_KEY=""
 ```
+```bash
+# run everything
+docker compose up 
+```
+OR
 ```bash
 # for frontend
 cd frontend && npm run dev 
