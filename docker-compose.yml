@@ -14,7 +14,7 @@ services:
     env_file:
       - ./backend/.env
     volumes:
-      - ./backend/renders:/app/renders
+      - renders_data:/app/renders
     ports:
       - "8000:8000"
     depends_on:
@@ -27,7 +27,7 @@ services:
     env_file:
       - ./backend/.env
     volumes:
-      - ./backend/renders:/app/renders
+      - renders_data:/app/renders
     depends_on:
       - redis
       - api
@@ -43,3 +43,4 @@ services:
 
 volumes:
   redis_data:
+  renders_data:

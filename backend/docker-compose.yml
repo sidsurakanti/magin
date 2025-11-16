@@ -13,7 +13,7 @@ services:
     command: uv run fastapi dev api.py --host 0.0.0.0 --port 8000
     volumes:
       - ./:/app
-      - ./renders:/app/renders
+      - renders_data:/app/renders
     ports:
       - "8000:8000"
     depends_on:
@@ -21,14 +21,16 @@ services:
 
   worker:
     build: ./
+    user: root
     container_name: celery-worker
     command: uv run celery -A api.brocolli worker --loglevel=info
     volumes:
       - ./:/app
-      - ./renders:/app/renders
+      - renders_data:/app/renders
     depends_on:
       - redis
       - api
 
 volumes:
   redis_data:
+  renders_data:
