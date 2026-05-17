@@ -10,7 +10,7 @@ services:
   api:
     build: ./
     container_name: fastapi
-    command: uv run fastapi dev api.py --host 0.0.0.0 --port 8000
+    command: /opt/venv/bin/fastapi dev api.py --host 0.0.0.0 --port 8000
     volumes:
       - ./:/app
       - renders_data:/app/renders
@@ -21,9 +21,8 @@ services:
 
   worker:
     build: ./
-    user: root
     container_name: celery-worker
-    command: uv run celery -A api.brocolli worker --loglevel=info
+    command: /opt/venv/bin/celery -A api.brocolli worker --loglevel=info
     volumes:
       - ./:/app
       - renders_data:/app/renders
