@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker --version)",
+      "Bash(docker compose build *)",
+      "Bash(docker build *)",
+      "Bash(docker run *)",
+      "Bash(docker compose up *)",
+      "Bash(curl -s http://localhost:8000/health)",
+      "Bash(python3 -m json.tool)",
+      "WebFetch(domain:docs.anthropic.com)"
+    ]
+  }
+}

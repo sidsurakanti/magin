@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowUp } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+
 export default function QueryPanel() {
   const [query, setQuery] = useState<string>("");
   const [editQuery, setEditQuery] = useState<string>("");
@@ -17,16 +19,21 @@ export default function QueryPanel() {
     jobId,
     setStoryboardChunk,
     setCodegenChunk,
+    appendStoryboardChunk,
+    appendCodegenChunk,
     setVideoUrl,
     setIteration,
     setStatus,
     setJobId,
+    setError,
   } = useAppStore<AppStore>((state) => state as AppStore);
 
   const handleSubmit = async () => {
-    // localhost:8000/submit/{base_prompt}
     setQuery("");
-    const response = await fetch("http://localhost:8000/submit/", {
+    setStoryboardChunk(null);
+    setCodegenChunk(null);
+    setError(null);
+    const response = await fetch(`${API_URL}/submit/`, {
       headers: { "Content-Type": "application/json" },
       method: "POST",
       body: JSON.stringify({ base_prompt: query }),
@@ -42,7 +49,7 @@ export default function QueryPanel() {
 
     if (!jobId) return;
 
-    const response = await fetch("http://localhost:8000/edit/", {
+    const response = await fetch(`${API_URL}/edit/`, {
       headers: { "Content-Type": "application/json" },
       method: "POST",
       body: JSON.stringify({ job_id: jobId, base_prompt: editQuery }),
@@ -54,26 +61,25 @@ export default function QueryPanel() {
 
   useEffect(() => {
     if (!jobId) return;
-    const sse = new EventSource(`http://localhost:8000/events/${jobId}`);
+    const sse = new EventSource(`${API_URL}/events/${jobId}`);
 
     sse.onmessage = (e) => {
       const data = JSON.parse(e.data);
 
       console.log("SSE MESSAGE: ", data);
       setStatus(data.status);
-      setStoryboardChunk(data.stream.storyboard);
-      setCodegenChunk(data.stream.codegen);
+      appendStoryboardChunk(data.stream.storyboard);
+      appendCodegenChunk(data.stream.codegen);
       setIteration(data.iteration);
 
       if (data.status === "done") {
         sse.close();
-        setVideoUrl(
-          `http://localhost:8000/retrieve/${jobId}/${data.iteration}`,
-        );
+        setVideoUrl(`${API_URL}/retrieve/${jobId}/${data.iteration}`);
       }
 
       if (data.status === "error") {
-        console.error("ERROR:", data.error);
+        setError(data.error);
+        sse.close();
       }
     };
 
@@ -118,9 +124,7 @@ export default function QueryPanel() {
                   key={idx}
                   onClick={() => {
                     if (!jobId) return;
-                    setVideoUrl(
-                      `http://localhost:8000/retrieve/${jobId}/${idx + 1}`,
-                    );
+                    setVideoUrl(`${API_URL}/retrieve/${jobId}/${idx + 1}`);
                   }}
                   className="mb-0.5 hover:bg-neutral-50 w-full"
                 >

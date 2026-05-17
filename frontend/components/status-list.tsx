@@ -14,10 +14,9 @@ const statuses = [
 ];
 
 export default function StatusList() {
-  const { status: activeStatus, iteration } = useAppStore<AppStore>(
+  const { status: activeStatus, iteration, error } = useAppStore<AppStore>(
     (state) => state as AppStore,
   );
-  // const activeStatus = "code-generating";
 
   return (
     <div className="flex flex-col items-start space-y-1 ml-6">
@@ -28,6 +27,9 @@ export default function StatusList() {
             status === activeStatus
               ? "text-black font-medium text-3xl mt-0.5 mb-1"
               : "text-neutral-600 text-base",
+            status === "error" && activeStatus === "error"
+              ? "text-red-600"
+              : "",
             "uppercase hover:scale-110 cursor-pointer transition-all",
           )}
         >
@@ -40,6 +42,11 @@ export default function StatusList() {
       <hr className="w-12 border-t border-neutral-300 my-2" />
       <span className="font-light text-xs">STATUS</span>
       <span className="font-light text-xs">ITERATION #{iteration}</span>
+      {activeStatus === "error" && error && (
+        <span className="font-light text-xs text-red-500 max-w-36 break-words">
+          {error}
+        </span>
+      )}
     </div>
   );
 }

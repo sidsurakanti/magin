@@ -36,7 +36,7 @@ brocolli = Celery(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=os.getenv("CORS_ORIGINS", "http://localhost:3000").split(","),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -319,10 +319,15 @@ def edit(req: EditRequest):
 @app.get("/events/{job_id}")
 async def sse(job_id: str):
     async def event_generator():
+        sb_cursor = 0
+        cg_cursor = 0
+
         while True:
             status = await redice.get(f"job:{job_id}:status")
-            storyboard = await redice.lrange(f"job:{job_id}:stream:storyboard", 0, -1)  # type: ignore
-            codegen = await redice.lrange(f"job:{job_id}:stream:codegen", 0, -1)  # type: ignore
+            new_sb = await redice.lrange(f"job:{job_id}:stream:storyboard", sb_cursor, -1)  # type: ignore
+            new_cg = await redice.lrange(f"job:{job_id}:stream:codegen", cg_cursor, -1)  # type: ignore
+            sb_cursor += len(new_sb)
+            cg_cursor += len(new_cg)
             error = await redice.get(f"job:{job_id}:status:error")
             iteration = await redice.get(f"job:{job_id}:iteration")
 
@@ -332,8 +337,8 @@ async def sse(job_id: str):
                 "iteration": iteration,
                 "error": error,
                 "stream": {
-                    "storyboard": "".join(storyboard),
-                    "codegen": "".join(codegen),
+                    "storyboard": "".join(new_sb),
+                    "codegen": "".join(new_cg),
                 },
                 "dummy_mode": DUMMY_MODE,
             }
